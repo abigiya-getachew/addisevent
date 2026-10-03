@@ -10,23 +10,25 @@
 ### Brand Colors
 | Token | Hex | Usage |
 |---|---|---|
-| `--brand-primary` | `#DC4A38` | Primary actions, CTAs, active nav, price emphasis. Warm, energetic, event-appropriate. |
-| `--brand-primary-soft` | `rgba(220,74,56,0.12)` | Selected card backgrounds, icon tiles, hover states |
-| `--brand-secondary` | `#2563AB` | Links, secondary accents, info states, "Verified" badge |
-| `--brand-secondary-soft` | `rgba(37,99,171,0.12)` | Secondary icon tiles, info callouts |
-| `--brand-warm` | `#C4693D` | Ethiopian-warm accent; used sparingly for cultural highlights, featured events |
+| `--brand-red` / `--brand-primary` | `#E04038` | Coffee-cherry red for primary actions, CTAs, active states, and highlights. |
+| `--brand-primary-soft` | `rgba(224,64,56,0.12)` | Selected card backgrounds, icon tiles, and gentle hover states. |
+| `--brand-gold` | `#D4A03C` | Sunshine gold for celebration accents, fine borders, and decorative details. Avoid for small text on light backgrounds. |
+| `--brand-deep-blue` / `--brand-secondary` | `#1E4D8C` | Trustworthy blue for headings, navigation, links, and information states. |
+| `--brand-secondary-soft` | `rgba(30,77,140,0.12)` | Secondary icon tiles and info callouts. |
 
 ### Neutral Scale
 | Token | Hex | Usage |
 |---|---|---|
-| `--bg` | `#FAF9F7` | Page background (warm off-white, easier on African sunlight) |
-| `--surface` | `#FFFFFF` | Cards, sheets, inputs |
-| `--surface-2` | `#F3F1ED` | Secondary surfaces, table headers, disabled fields |
-| `--text-primary` | `#0F172A` | Headings, body text |
-| `--text-secondary` | `#5B6472` | Secondary labels, meta info |
-| `--text-muted` | `#8B93A1` | Placeholders, captions, disabled text |
-| `--border` | `rgba(15,23,42,0.10)` | Card borders, dividers, input borders (default) |
-| `--border-strong` | `rgba(15,23,42,0.20)` | Focused inputs, selected states |
+| `--cream-ivory` / `--background` | `#F9F6F0` | Warm, flour-inspired page background and soft sections. |
+| `--soft-stone` / `--surface` | `#E8E4DA` | Cards, dividers, and gently contrasting surfaces. |
+| `--surface-raised` | `#FFFFFF` | Raised cards, sheets, and inputs. |
+| `--charcoal` / `--foreground` | `#2A2A2A` | Readable body text and primary content. |
+| `--text-secondary` | `#5B554D` | Secondary labels and metadata. |
+| `--text-muted` | `#716B62` | Captions and less prominent text; maintain readable contrast. |
+| `--border` | `#E8E4DA` | Card borders, dividers, and input borders. |
+| `--border-strong` | `rgba(42,42,42,0.20)` | Focused inputs and selected states. |
+
+**Signature motif**: Use a simplified geometric Ethiopian-cross pattern sparingly: faint gold on cream or a thin outline. Keep it subtle on hero backgrounds, card corners, footer dividers, and loading indicators; never use it as a high-contrast or dense decoration.
 
 ### Semantic Colors
 | Token | Hex | Usage |
@@ -50,9 +52,9 @@
 
 ## 5.2 Type Scale
 
-**Font family**: Primary = `Sora` (headings + body, geometric, works for both Latin + Amharic fallback). Amharic fallback stack: `Noto Sans Ethiopic`, system default.
+**Font family**: Headings = `Sora`; body = `Inter`; Amharic = `Noto Sans Ethiopic`, with Latin fonts retained as fallback. Accent phrases may use a restrained calligraphy-inspired style for small decorative text only.
 
-Load: `Sora:wght@400;500;600;700;800` + `Noto+Sans+Ethiopic:wght@400;500;600;700`
+Load: Sora for headings, Inter for body copy, and Noto Sans Ethiopic for Amharic text.
 
 | Token | Size / Line-height / Weight | Usage |
 |---|---|---|
@@ -103,10 +105,10 @@ Load: `Sora:wght@400;500;600;700;800` + `Noto+Sans+Ethiopic:wght@400;500;600;700
 
 | Token | Value | Usage |
 |---|---|---|
-| `--shadow-1` | `0 1px 2px rgba(15,23,42,0.06)` | Cards (resting), inputs |
-| `--shadow-2` | `0 4px 12px rgba(15,23,42,0.08)` | Hover lift, sticky CTA bar, dropdowns |
-| `--shadow-3` | `0 12px 32px rgba(15,23,42,0.12)` | Modals, bottom sheets, featured cards |
-| `--shadow-focus` | `0 0 0 3px rgba(220,74,56,0.25)` | Focus ring (inputs, buttons) |
+| `--shadow-1` | `0 1px 2px rgba(42,42,42,0.06)` | Cards (resting), inputs |
+| `--shadow-2` | `0 4px 12px rgba(42,42,42,0.08)` | Hover lift, sticky CTA bar, dropdowns |
+| `--shadow-3` | `0 12px 32px rgba(42,42,42,0.12)` | Modals, bottom sheets, featured cards |
+| `--shadow-focus` | `0 0 0 3px rgba(224,64,56,0.25)` | Focus ring (inputs, buttons) |
 
 ---
 
