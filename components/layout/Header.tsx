@@ -1,10 +1,12 @@
+import { Menu, Sparkle } from "lucide-react";
+
 export function Header() {
   return (
    <header className="sticky top-0 z-50 bg-cream/90 backdrop-blur-sm shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         {/* === LEFT: Logo === */}
         <a href="/" className="flex items-center gap-2">
-          <span className="text-brand-gold text-xl">✦</span>
+          <Sparkle aria-hidden="true" className="size-5 fill-brand-gold text-brand-gold" />
           <span className="font-bold text-lg">
             <span className="text-brand-red">Addis</span>
             <span className="text-brand-blue">Event</span>
@@ -34,7 +36,9 @@ export function Header() {
           </a>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden text-2xl">☰</button>
+          <button className="md:hidden" aria-label="Open navigation menu">
+            <Menu aria-hidden="true" className="size-6" />
+          </button>
         </div>
 
       </div>

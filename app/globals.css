@@ -503,6 +503,85 @@ body {
   background: linear-gradient(90deg, transparent, rgb(212 160 60 / 55%) 20%, rgb(212 160 60 / 55%) 80%, transparent);
 }
 
+@keyframes brand-marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.brand-marquee {
+  position: relative;
+  overflow: hidden;
+  border-block: 1px solid rgb(212 160 60 / 45%);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgb(212 160 60 / 14%), transparent 68%),
+    linear-gradient(105deg, #202020, #30281c 48%, #202020);
+  color: white;
+}
+
+.brand-marquee::before,
+.brand-marquee::after {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  width: clamp(2rem, 8vw, 8rem);
+  content: "";
+  pointer-events: none;
+}
+
+.brand-marquee::before {
+  left: 0;
+  background: linear-gradient(90deg, #24211d, transparent);
+}
+
+.brand-marquee::after {
+  right: 0;
+  background: linear-gradient(270deg, #24211d, transparent);
+}
+
+.brand-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: brand-marquee-scroll 34s linear infinite;
+}
+
+.brand-marquee:hover .brand-marquee__track {
+  animation-play-state: paused;
+}
+
+.brand-marquee__group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: clamp(2rem, 6vw, 6rem);
+  padding: 1.1rem clamp(1.25rem, 4vw, 4rem);
+}
+
+.brand-marquee__item {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: clamp(2rem, 6vw, 6rem);
+  font-family: var(--font-heading), sans-serif;
+  font-size: clamp(1.15rem, 2.6vw, 1.85rem);
+  font-weight: 850;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+
+.brand-marquee__star {
+  display: grid;
+  size: 1.7rem;
+  place-items: center;
+  border: 1px solid rgb(212 160 60 / 35%);
+  border-radius: 9999px;
+  background: rgb(212 160 60 / 10%);
+  color: #edc56d;
+  font-size: 0.75rem;
+  box-shadow: 0 0 18px rgb(212 160 60 / 14%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .trust-underline,
   .home-cta-button,
@@ -518,6 +597,27 @@ body {
   .featured-stack-card__image,
   .featured-stack-card__action {
     transition: none;
+  }
+
+  .brand-marquee__track {
+    width: 100%;
+    animation: none;
+  }
+
+  .brand-marquee__group {
+    justify-content: space-around;
+    width: 100%;
+    gap: 0.5rem;
+    padding-inline: 0.5rem;
+  }
+
+  .brand-marquee__group + .brand-marquee__group {
+    display: none;
+  }
+
+  .brand-marquee__item {
+    gap: 0.5rem;
+    font-size: clamp(0.75rem, 3.5vw, 1.25rem);
   }
 
 }
