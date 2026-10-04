@@ -84,7 +84,7 @@ const events = [
   },
 ];
 
-export function FeaturedEvents() {
+export function FeaturedEvents({ locale }: { locale: string }) {
   const trackRef = useRef<HTMLDivElement>(null);
 
   function scrollEvents(direction: -1 | 1) {
@@ -108,15 +108,15 @@ export function FeaturedEvents() {
           <div>
             <p className="mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-brand-red">
               <span aria-hidden="true" className="size-2 rounded-full bg-brand-red" />
-              Make this week one to remember
+              Always Moving
             </p>
             <h2
               id="featured-events-heading"
               className="font-heading text-3xl font-bold tracking-tight text-charcoal sm:text-4xl lg:text-5xl"
             >
-              This Week in{" "}
+              New events drop{" "}
               <span className="relative inline-block text-brand-red">
-                Addis
+                every hour
                 <Sparkles
                   aria-hidden="true"
                   className="absolute -right-6 -top-2 size-4 text-brand-gold sm:-right-7 sm:size-5"
@@ -126,7 +126,7 @@ export function FeaturedEvents() {
             </h2>
           </div>
           <p className="max-w-md px-4 text-base leading-7 text-text-secondary sm:px-0 sm:text-right">
-            Find your people, try something new, and make a night of it.
+            Concerts, markets, workshops, community gatherings updated throughout the day.
           </p>
         </div>
 
@@ -139,7 +139,7 @@ export function FeaturedEvents() {
           {events.map(({ title, venue, date, dateTime, time, month, day, price, priceLabel, category, action, Icon, image, theme }, index) => (
             <Link
               key={title}
-              href="/events"
+              href={`/${locale}/events`}
               aria-label={`${action}: ${title}, ${date} at ${venue}`}
               className={`featured-stack-card featured-stack-card--${theme}`}
               style={{ zIndex: events.length - index }}
@@ -234,10 +234,10 @@ export function FeaturedEvents() {
 
         <div className="mt-8 px-4 text-center sm:mt-10">
           <Link
-            href="/events"
+            href={`/${locale}/events`}
             className="group inline-flex items-center gap-2 rounded-full px-5 py-3 font-heading font-bold text-brand-red transition-colors hover:bg-brand-red/5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red"
           >
-            View All Events
+            See What&apos;s Fresh
             <ArrowRight
               aria-hidden="true"
               className="size-5 transition-transform duration-200 group-hover:translate-x-1.5 motion-reduce:transition-none"
