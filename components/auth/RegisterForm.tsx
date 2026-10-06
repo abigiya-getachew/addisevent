@@ -2,9 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, User, Phone, Smartphone } from "lucide-react";
 
 type AccountType = "attendee" | "organizer";
+
+type RegisterResponse = {
+  user?: { id: string };
+  error?: string;
+  message?: string;
+};
 
 // ── Social / quick-signup options ────────────────────────────────────────────
 const QUICK_OPTIONS = [
@@ -27,9 +34,54 @@ const QUICK_OPTIONS = [
   },
 ];
 
-export function RegisterForm() {
+export function RegisterForm({ locale }: { locale: string }) {
+  const router = useRouter();
   const [accountType, setAccountType] = useState<AccountType>("attendee");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    const formData = new FormData(event.currentTarget);
+    const name = String(formData.get("name") ?? "").trim();
+    const phone = String(formData.get("phone") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
+
+    try {
+      const response = await fetch("/api/v1/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          phone,
+          password,
+          role: accountType,
+          locale,
+        }),
+      });
+      const result = (await response.json()) as RegisterResponse;
+
+      if (!response.ok || !result.user?.id) {
+        setError(
+          result.error ??
+            result.message ??
+            "We couldn't create your account. Please try again."
+        );
+        return;
+      }
+
+      const dashboard = accountType === "organizer" ? "organizer" : "user";
+      router.push(`/${locale}/dashboard/${dashboard}`);
+    } catch {
+      setError("We couldn't reach the account service. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -118,7 +170,7 @@ export function RegisterForm() {
       </fieldset>
 
       {/* ── Signup form ── */}
-      <form className="space-y-5" noValidate>
+      <form className="space-y-5" onSubmit={handleSubmit}>
         {/* Full name */}
         <div>
           <label
@@ -134,7 +186,9 @@ export function RegisterForm() {
             />
             <input
               id="register-name"
+              name="name"
               type="text"
+              required
               autoComplete="name"
               placeholder="Abebe Girma"
               className="w-full rounded-xl border border-soft-stone bg-white py-3 pl-10 pr-4 text-sm text-charcoal placeholder:text-text-muted focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 transition"
@@ -160,7 +214,9 @@ export function RegisterForm() {
             />
             <input
               id="register-phone"
+              name="phone"
               type="tel"
+              required
               autoComplete="tel"
               placeholder="09..."
               className="w-full rounded-xl border border-soft-stone bg-white py-3 pl-10 pr-4 text-sm text-charcoal placeholder:text-text-muted focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 transition"
@@ -179,7 +235,10 @@ export function RegisterForm() {
           <div className="relative">
             <input
               id="register-password"
+              name="password"
               type={showPassword ? "text" : "password"}
+              required
+              minLength={8}
               autoComplete="new-password"
               placeholder="••••••••"
               className="w-full rounded-xl border border-soft-stone bg-white py-3 pl-4 pr-12 text-sm text-charcoal placeholder:text-text-muted focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 transition"
@@ -200,11 +259,17 @@ export function RegisterForm() {
         </div>
 
         {/* Submit */}
+        {error && (
+          <p role="alert" className="text-sm font-medium text-brand-red">
+            {error}
+          </p>
+        )}
         <button
           type="submit"
+          disabled={isSubmitting}
           className="w-full rounded-full bg-brand-red py-3.5 font-heading font-extrabold text-white shadow-[0_6px_24px_rgb(224_64_56/30%)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#c0312a] hover:shadow-[0_10px_32px_rgb(224_64_56/40%)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none"
         >
-          Create Account
+          {isSubmitting ? "Creating Account..." : "Create Account"}
         </button>
       </form>
 

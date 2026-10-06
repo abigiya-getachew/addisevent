@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Join AddisEvent to discover and book events in Addis Ababa.",
 };
 
-export default function RegisterPage() {
-  return <RegisterForm />;
+export default async function RegisterPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return <RegisterForm locale={locale} />;
 }

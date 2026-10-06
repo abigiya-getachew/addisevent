@@ -27,6 +27,12 @@ A full-stack ticketing platform built for the local market:
 # Install
 npm install
 
-# Dev server
+# Configure environment variables in .env. For Supabase on an IPv4-only
+# network, reset the database password in Supabase if needed, then copy the
+# complete Session pooler string from Dashboard > Connect and URL-encode any
+# reserved password characters. Updating .env does not change Supabase's password.
+# Apply the SQL migrations in server/src/db/migrations in filename order using
+# the Supabase SQL Editor before starting the app.
+# Start the Next.js app and API server together
 npm run dev
 # Open → http://localhost:3000
