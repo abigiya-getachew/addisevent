@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Smartphone, Mail } from "lucide-react";
+import { signIn } from "next-auth/react";
 
 // ── Social / quick-login options ─────────────────────────────────────────────
 const QUICK_OPTIONS = [
@@ -36,7 +38,56 @@ const QUICK_OPTIONS = [
 ];
 
 export function LoginForm() {
+  const router = useRouter();
+
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        identifier,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid credentials. Please try again.");
+        return;
+      }
+
+      // Redirect based on role — fetch the session to read the role
+      // then route. Simplest: use router.push to /en/dashboard and let
+      // the middleware/redirect callback handle role-specific routing.
+      // We use a full reload so the session cookie is picked up.
+      const res = await fetch("/api/auth/session");
+      const session = await res.json() as { user?: { role?: string } } | null;
+      const role = session?.user?.role;
+
+      if (role === "admin") {
+        router.push("/en/admin");
+      } else if (role === "organizer") {
+        router.push("/en/organizer");
+      } else {
+        router.push("/en/dashboard");
+      }
+    } catch {
+      setError("Could not reach the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    await signIn("google", { callbackUrl: "/en/dashboard" });
+  }
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -50,8 +101,18 @@ export function LoginForm() {
         </p>
       </div>
 
+      {/* ── Error banner ── */}
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {error}
+        </div>
+      )}
+
       {/* ── Form ── */}
-      <form className="space-y-5" noValidate>
+      <form className="space-y-5" noValidate onSubmit={handleSubmit}>
         {/* Email / Phone */}
         <div>
           <label
@@ -70,6 +131,9 @@ export function LoginForm() {
               type="text"
               autoComplete="username"
               placeholder="you@example.com or 09..."
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              required
               className="w-full rounded-xl border border-soft-stone bg-white py-3 pl-10 pr-4 text-sm text-charcoal placeholder:text-text-muted focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 transition"
             />
           </div>
@@ -89,6 +153,9 @@ export function LoginForm() {
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
               className="w-full rounded-xl border border-soft-stone bg-white py-3 pl-4 pr-12 text-sm text-charcoal placeholder:text-text-muted focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 transition"
             />
             <button
@@ -120,9 +187,10 @@ export function LoginForm() {
         {/* Submit */}
         <button
           type="submit"
-          className="w-full rounded-full bg-brand-red py-3.5 font-heading font-extrabold text-white shadow-[0_6px_24px_rgb(224_64_56/30%)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#c0312a] hover:shadow-[0_10px_32px_rgb(224_64_56/40%)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red active:scale-[0.99] motion-reduce:transform-none motion-reduce:transition-none"
+          disabled={loading}
+          className="w-full rounded-full bg-brand-red py-3.5 font-heading font-extrabold text-white shadow-[0_6px_24px_rgb(224_64_56/30%)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#c0312a] hover:shadow-[0_10px_32px_rgb(224_64_56/40%)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed motion-reduce:transform-none motion-reduce:transition-none"
         >
-          Log In
+          {loading ? "Logging in…" : "Log In"}
         </button>
       </form>
 
@@ -141,6 +209,7 @@ export function LoginForm() {
           <button
             key={id}
             type="button"
+            onClick={id === "google" ? handleGoogleSignIn : undefined}
             className="flex flex-col items-center gap-1.5 rounded-xl border border-soft-stone bg-white py-3 px-2 text-xs font-semibold text-charcoal shadow-[0_2px_8px_rgb(42_42_42/5%)] transition duration-150 hover:border-brand-gold/50 hover:shadow-[0_4px_14px_rgb(212_160_60/12%)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
           >
             {icon}

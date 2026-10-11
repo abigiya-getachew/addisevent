@@ -22,45 +22,25 @@ declare module "hono" {
   }
 }
 
-// ─── JWT Verification ─────────────────────────────────────────────────────────
+// ─── Token Verification ───────────────────────────────────────────────────────
 
 /**
- * Parses and verifies the Authorization: Bearer <token> header.
- * Auth.js (NextAuth v5) signs tokens with AUTH_SECRET — we verify here.
+ * Verifies the Authorization: Bearer <token> header.
  *
- * NOTE: Auth.js v5 JWTs are JWE-encoded by default.
- * For the MVP we use a shared secret and validate via the Auth.js encode/decode
- * helpers. Replace this with a proper JWKS endpoint when scaling.
+ * Auth.js v5 stores the user's UUID as token.sub and exposes it as
+ * session.accessToken. The client sends this UUID as the Bearer value.
+ * We treat it as a user ID — look it up in the DB directly for authoritative
+ * role data. This sidesteps JWE complexity entirely for the MVP.
+ *
+ * UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (36 chars)
  */
 async function verifyToken(token: string): Promise<AuthUser> {
-  // Auth.js stores the user sub as the user's DB id.
-  // We decode the payload and fetch the user for authoritative role data.
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) {
-    throw new HTTPException(500, { message: "AUTH_SECRET is not configured" });
-  }
+  // Basic sanity check: must look like a UUID (36-char hex with hyphens)
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-  // Decode the JWT payload (HS256 / standard JWT — adjust if using JWE)
-  const parts = token.split(".");
-  if (parts.length !== 3) {
+  if (!uuidPattern.test(token)) {
     throw new HTTPException(401, { message: "Malformed token" });
-  }
-
-  let payload: { sub?: string; exp?: number };
-  try {
-    payload = JSON.parse(
-      Buffer.from(parts[1]!, "base64url").toString("utf-8")
-    );
-  } catch {
-    throw new HTTPException(401, { message: "Invalid token payload" });
-  }
-
-  if (!payload.sub) {
-    throw new HTTPException(401, { message: "Token missing subject" });
-  }
-
-  if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-    throw new HTTPException(401, { message: "Token expired" });
   }
 
   const [user] = await db
@@ -73,7 +53,7 @@ async function verifyToken(token: string): Promise<AuthUser> {
       locale: schema.users.locale,
     })
     .from(schema.users)
-    .where(eq(schema.users.id, payload.sub))
+    .where(eq(schema.users.id, token))
     .limit(1);
 
   if (!user) {
@@ -86,13 +66,15 @@ async function verifyToken(token: string): Promise<AuthUser> {
 // ─── Middleware ───────────────────────────────────────────────────────────────
 
 /**
- * Requires a valid JWT. Attaches the user to `c.var.user`.
+ * Requires a valid Bearer token. Attaches the user to `c.var.user`.
  */
 export const requireAuth: MiddlewareHandler = createMiddleware(
   async (c: Context, next: Next) => {
     const authHeader = c.req.header("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      throw new HTTPException(401, { message: "Missing or invalid Authorization header" });
+      throw new HTTPException(401, {
+        message: "Missing or invalid Authorization header",
+      });
     }
 
     const token = authHeader.slice(7);

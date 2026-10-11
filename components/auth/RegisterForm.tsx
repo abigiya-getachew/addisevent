@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, User, Phone, Smartphone } from "lucide-react";
+import { signIn, getSession } from "next-auth/react";
 
 type AccountType = "attendee" | "organizer";
 
@@ -74,8 +75,26 @@ export function RegisterForm({ locale }: { locale: string }) {
         return;
       }
 
-      const dashboard = accountType === "organizer" ? "organizer" : "user";
-      router.push(`/${locale}/dashboard/${dashboard}`);
+      // Auto sign-in after successful registration
+      const signInResult = await signIn("credentials", {
+        identifier: phone,
+        password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        // Registration succeeded but auto-login failed — go to login page
+        router.push(`/${locale}/auth/login`);
+        return;
+      }
+
+      const session = await getSession();
+      const role = session?.user ? (session.user as { role?: string }).role : undefined;
+      if (role === "organizer") {
+        router.push(`/${locale}/organizer`);
+      } else {
+        router.push(`/${locale}/dashboard`);
+      }
     } catch {
       setError("We couldn't reach the account service. Please try again.");
     } finally {

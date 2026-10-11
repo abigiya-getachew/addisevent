@@ -23,15 +23,15 @@ import {
   Cog,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { supabaseBrowser } from '@/lib/auth';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
-function getDisplayName(user: { email?: string; user_metadata?: { full_name?: string } } | null): string {
+function getDisplayName(user: { name?: string | null; email?: string | null; phone?: string | null } | null): string {
   if (!user) return '';
-  if (user.user_metadata?.full_name) return user.user_metadata.full_name;
+  if (user.name) return user.name;
   if (user.email) return user.email.split('@')[0];
+  if (user.phone) return user.phone;
   return 'Account';
 }
 
@@ -58,11 +58,12 @@ function Divider() {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function Header() {
-  const { user, role } = useAuth();
+  const { user, role, loading, clearSession } = useAuth();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -77,16 +78,44 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [dropdownOpen]);
 
+  // Keyboard navigation: Escape closes dropdown; arrow keys move focus within menu
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!dropdownOpen) return;
+      if (e.key === 'Escape') {
+        setDropdownOpen(false);
+        return;
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const menu = dropdownMenuRef.current;
+        if (!menu) return;
+        const items = Array.from(
+          menu.querySelectorAll<HTMLElement>('[role="menuitem"]')
+        );
+        const active = document.activeElement as HTMLElement;
+        const idx = items.indexOf(active);
+        if (e.key === 'ArrowDown') {
+          items[(idx + 1) % items.length]?.focus();
+        } else {
+          items[(idx - 1 + items.length) % items.length]?.focus();
+        }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [dropdownOpen]);
+
   // Close mobile menu on route change / resize
   useEffect(() => {
     setMobileOpen(false);
   }, []);
 
   async function handleSignOut() {
-    await supabaseBrowser.auth.signOut();
+    clearSession();
     setDropdownOpen(false);
     setMobileOpen(false);
-    router.refresh();
+    router.push('/');
   }
 
   const displayName = getDisplayName(user);
@@ -169,6 +198,8 @@ export function Header() {
             href="/dashboard"
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
+            role="menuitem"
+            tabIndex={-1}
           >
             <User className="size-4" aria-hidden="true" />My Dashboard
           </Link>
@@ -176,6 +207,8 @@ export function Header() {
             href="/dashboard/profile"
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
+            role="menuitem"
+            tabIndex={-1}
           >
             <User className="size-4" aria-hidden="true" />Profile
           </Link>
@@ -183,6 +216,8 @@ export function Header() {
             href="/dashboard/settings"
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
+            role="menuitem"
+            tabIndex={-1}
           >
             <Settings className="size-4" aria-hidden="true" />Settings
           </Link>
@@ -190,6 +225,8 @@ export function Header() {
           <button
             onClick={handleSignOut}
             className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors"
+            role="menuitem"
+            tabIndex={-1}
           >
             <LogOut className="size-4" aria-hidden="true" />Log Out
           </button>
@@ -204,6 +241,8 @@ export function Header() {
             href="/organizer/settings"
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
+            role="menuitem"
+            tabIndex={-1}
           >
             <Settings className="size-4" aria-hidden="true" />Organizer Settings
           </Link>
@@ -211,6 +250,8 @@ export function Header() {
             href="/dashboard"
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
+            role="menuitem"
+            tabIndex={-1}
           >
             <User className="size-4" aria-hidden="true" />Switch to Attendee
           </Link>
@@ -218,6 +259,8 @@ export function Header() {
           <button
             onClick={handleSignOut}
             className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors"
+            role="menuitem"
+            tabIndex={-1}
           >
             <LogOut className="size-4" aria-hidden="true" />Log Out
           </button>
@@ -232,6 +275,8 @@ export function Header() {
             href="/dashboard"
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
+            role="menuitem"
+            tabIndex={-1}
           >
             <User className="size-4" aria-hidden="true" />Switch → Attendee
           </Link>
@@ -239,6 +284,8 @@ export function Header() {
             href="/organizer"
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
+            role="menuitem"
+            tabIndex={-1}
           >
             <BarChart2 className="size-4" aria-hidden="true" />Switch → Organizer
           </Link>
@@ -246,6 +293,8 @@ export function Header() {
             href="/admin"
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
+            role="menuitem"
+            tabIndex={-1}
           >
             <Cog className="size-4" aria-hidden="true" />Admin Panel
           </Link>
@@ -253,6 +302,8 @@ export function Header() {
           <button
             onClick={handleSignOut}
             className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors"
+            role="menuitem"
+            tabIndex={-1}
           >
             <LogOut className="size-4" aria-hidden="true" />Log Out
           </button>
@@ -349,7 +400,10 @@ export function Header() {
         <div className="flex items-center gap-3">
           <LanguageSwitcher />
 
-          {role === 'guest' ? (
+          {loading ? (
+            // Prevent flash of guest nav while session initialises
+            <div className="hidden sm:block h-9 w-28 rounded-full bg-gray-100 animate-pulse" aria-hidden="true" />
+          ) : role === 'guest' ? (
             <>
               <Link
                 href="/auth/login"
@@ -378,7 +432,12 @@ export function Header() {
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50" role="menu">
+                <div
+                  className="absolute right-0 mt-2 min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50"
+                  role="menu"
+                  aria-label="User menu"
+                  ref={dropdownMenuRef}
+                >
                   <DropdownItems />
                 </div>
               )}
@@ -423,7 +482,7 @@ export function Header() {
           <Divider />
 
           {/* Auth section */}
-          {role === 'guest' ? (
+          {loading ? null : role === 'guest' ? (
             <div className="px-4 flex flex-col gap-2 pt-1">
               <Link
                 href="/auth/login"
