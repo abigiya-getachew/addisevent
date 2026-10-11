@@ -1,3 +1,1 @@
-export default function OrganizerEventPage() {
-  return null;
-}
+export { default, metadata } from "../../../dashboard/organizer/events/[id]/page";

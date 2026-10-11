@@ -15,7 +15,6 @@ import {
   Bookmark,
   BarChart2,
   Calendar,
-  Plus,
   DollarSign,
   Users,
   FileText,
@@ -118,10 +117,25 @@ export function Header() {
     role === 'attendee'
       ? `/${locale}/dashboard/user`
       : role === 'organizer'
-        ? `/${locale}/dashboard/organizer`
+        ? `/${locale}/organizer`
         : role === 'admin'
           ? `/${locale}/admin`
           : '/';
+
+  // ── Active link helpers ───────────────────────────────────────────────────
+
+  function isActive(href: string) {
+    // strip locale prefix from pathname before comparing
+    const stripped = pathname.replace(/^\/(en|am)/, '') || '/';
+    return stripped === href || (href !== '/' && stripped.startsWith(href));
+  }
+
+  const ACTIVE_STYLE = { color: '#E04038', fontWeight: 600, borderBottom: '2px solid #E04038', paddingBottom: '2px' } as const;
+  const INACTIVE_STYLE = {} as const;
+
+  function lnk(href: string) {
+    return { style: isActive(href) ? ACTIVE_STYLE : INACTIVE_STYLE, className: 'transition-colors hover:text-brand-red' };
+  }
 
   // ── Role-specific center nav items ──────────────────────────────────────────
 
@@ -129,9 +143,9 @@ export function Header() {
     if (role === 'guest') {
       return (
         <>
-          <Link href="/events" className="hover:text-brand-red transition-colors">Events</Link>
-          <Link href="/organizer" className="hover:text-brand-red transition-colors">For Organizers</Link>
-          <Link href="/about" className="hover:text-brand-red transition-colors">About</Link>
+          <Link href="/events" {...lnk('/events')}>Events</Link>
+          <Link href="/organizer" {...lnk('/organizer')}>For Organizers</Link>
+          <Link href="/about" {...lnk('/about')}>About</Link>
         </>
       );
     }
@@ -139,14 +153,14 @@ export function Header() {
     if (role === 'attendee') {
       return (
         <>
-          <Link href="/events" className="hover:text-brand-red transition-colors">Events</Link>
-          <Link href={`/${locale}/dashboard/user/tickets`} className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <Link href="/events" {...lnk('/events')}>Events</Link>
+          <Link href={`/${locale}/dashboard/user/tickets`} {...lnk(`/${locale}/dashboard/user/tickets`)} className="flex items-center gap-1 transition-colors hover:text-brand-red">
             <Ticket className="size-4" aria-hidden="true" />My Tickets
           </Link>
-          <Link href={`/${locale}/dashboard/user/saved`} className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <Link href={`/${locale}/dashboard/user/saved`} {...lnk(`/${locale}/dashboard/user/saved`)} className="flex items-center gap-1 transition-colors hover:text-brand-red">
             <Bookmark className="size-4" aria-hidden="true" />Saved
           </Link>
-          <Link href="/about" className="hover:text-brand-red transition-colors">About</Link>
+          <Link href="/about" {...lnk('/about')}>About</Link>
         </>
       );
     }
@@ -154,37 +168,33 @@ export function Header() {
     if (role === 'organizer') {
       return (
         <>
-          <Link href="/events" className="hover:text-brand-red transition-colors">Events</Link>
-          <Link href="/organizer" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <Link href="/events" {...lnk('/events')}>Events</Link>
+          <Link href="/organizer" {...lnk('/organizer')} className="flex items-center gap-1 transition-colors hover:text-brand-red">
             <BarChart2 className="size-4" aria-hidden="true" />Dashboard
           </Link>
-          <Link href="/organizer/events" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <Link href="/organizer/events" {...lnk('/organizer/events')} className="flex items-center gap-1 transition-colors hover:text-brand-red">
             <Calendar className="size-4" aria-hidden="true" />My Events
           </Link>
-          <Link href="/organizer/events/new" className="flex items-center gap-1 hover:text-brand-red transition-colors">
-            <Plus className="size-4" aria-hidden="true" />Create Event
-          </Link>
-          <Link href="/organizer/settings#payouts" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <Link href="/organizer/settings#payouts" {...lnk('/organizer/settings')} className="flex items-center gap-1 transition-colors hover:text-brand-red">
             <DollarSign className="size-4" aria-hidden="true" />Payouts
           </Link>
         </>
       );
     }
 
-    // admin
     return (
       <>
-        <Link href="/events" className="hover:text-brand-red transition-colors">Events</Link>
-        <Link href="/admin/users" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+        <Link href="/events" {...lnk('/events')}>Events</Link>
+        <Link href="/admin/users" {...lnk('/admin/users')} className="flex items-center gap-1 transition-colors hover:text-brand-red">
           <Users className="size-4" aria-hidden="true" />Users
         </Link>
-        <Link href="/admin/events" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+        <Link href="/admin/events" {...lnk('/admin/events')} className="flex items-center gap-1 transition-colors hover:text-brand-red">
           <FileText className="size-4" aria-hidden="true" />All Events
         </Link>
-        <Link href="/admin/reports" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+        <Link href="/admin/reports" {...lnk('/admin/reports')} className="flex items-center gap-1 transition-colors hover:text-brand-red">
           <Search className="size-4" aria-hidden="true" />Reports
         </Link>
-        <Link href="/admin/settings" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+        <Link href="/admin/settings" {...lnk('/admin/settings')} className="flex items-center gap-1 transition-colors hover:text-brand-red">
           <Cog className="size-4" aria-hidden="true" />System
         </Link>
       </>
@@ -313,13 +323,17 @@ export function Header() {
 
   // ── Mobile role-specific items ───────────────────────────────────────────────
 
+  function mlnk(href: string) {
+    return { style: isActive(href) ? ACTIVE_STYLE : INACTIVE_STYLE, className: 'block px-4 py-2 transition-colors hover:text-brand-red' };
+  }
+
   function MobileNavItems() {
     if (role === 'guest') {
       return (
         <>
-          <Link href="/events" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>Events</Link>
-          <Link href="/organizer" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>For Organizers</Link>
-          <Link href="/about" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>About</Link>
+          <Link href="/events" {...mlnk('/events')} onClick={() => setMobileOpen(false)}>Events</Link>
+          <Link href="/organizer" {...mlnk('/organizer')} onClick={() => setMobileOpen(false)}>For Organizers</Link>
+          <Link href="/about" {...mlnk('/about')} onClick={() => setMobileOpen(false)}>About</Link>
         </>
       );
     }
@@ -327,14 +341,14 @@ export function Header() {
     if (role === 'attendee') {
       return (
         <>
-          <Link href="/events" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>Events</Link>
-          <Link href={`/${locale}/dashboard/user/tickets`} className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <Link href="/events" {...mlnk('/events')} onClick={() => setMobileOpen(false)}>Events</Link>
+          <Link href={`/${locale}/dashboard/user/tickets`} {...mlnk(`/${locale}/dashboard/user/tickets`)} className="flex items-center gap-2 px-4 py-2 transition-colors hover:text-brand-red" onClick={() => setMobileOpen(false)}>
             <Ticket className="size-4" aria-hidden="true" />My Tickets
           </Link>
-          <Link href={`/${locale}/dashboard/user/saved`} className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <Link href={`/${locale}/dashboard/user/saved`} {...mlnk(`/${locale}/dashboard/user/saved`)} className="flex items-center gap-2 px-4 py-2 transition-colors hover:text-brand-red" onClick={() => setMobileOpen(false)}>
             <Bookmark className="size-4" aria-hidden="true" />Saved
           </Link>
-          <Link href="/about" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>About</Link>
+          <Link href="/about" {...mlnk('/about')} onClick={() => setMobileOpen(false)}>About</Link>
         </>
       );
     }
@@ -342,37 +356,33 @@ export function Header() {
     if (role === 'organizer') {
       return (
         <>
-          <Link href="/events" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>Events</Link>
-          <Link href="/organizer" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <Link href="/events" {...mlnk('/events')} onClick={() => setMobileOpen(false)}>Events</Link>
+          <Link href="/organizer" {...mlnk('/organizer')} className="flex items-center gap-2 px-4 py-2 transition-colors hover:text-brand-red" onClick={() => setMobileOpen(false)}>
             <BarChart2 className="size-4" aria-hidden="true" />Dashboard
           </Link>
-          <Link href="/organizer/events" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <Link href="/organizer/events" {...mlnk('/organizer/events')} className="flex items-center gap-2 px-4 py-2 transition-colors hover:text-brand-red" onClick={() => setMobileOpen(false)}>
             <Calendar className="size-4" aria-hidden="true" />My Events
           </Link>
-          <Link href="/organizer/events/new" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
-            <Plus className="size-4" aria-hidden="true" />Create Event
-          </Link>
-          <Link href="/organizer/settings#payouts" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <Link href="/organizer/settings#payouts" {...mlnk('/organizer/settings')} className="flex items-center gap-2 px-4 py-2 transition-colors hover:text-brand-red" onClick={() => setMobileOpen(false)}>
             <DollarSign className="size-4" aria-hidden="true" />Payouts
           </Link>
         </>
       );
     }
 
-    // admin
     return (
       <>
-        <Link href="/events" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>Events</Link>
-        <Link href="/admin/users" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+        <Link href="/events" {...mlnk('/events')} onClick={() => setMobileOpen(false)}>Events</Link>
+        <Link href="/admin/users" {...mlnk('/admin/users')} className="flex items-center gap-2 px-4 py-2 transition-colors hover:text-brand-red" onClick={() => setMobileOpen(false)}>
           <Users className="size-4" aria-hidden="true" />Users
         </Link>
-        <Link href="/admin/events" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+        <Link href="/admin/events" {...mlnk('/admin/events')} className="flex items-center gap-2 px-4 py-2 transition-colors hover:text-brand-red" onClick={() => setMobileOpen(false)}>
           <FileText className="size-4" aria-hidden="true" />All Events
         </Link>
-        <Link href="/admin/reports" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+        <Link href="/admin/reports" {...mlnk('/admin/reports')} className="flex items-center gap-2 px-4 py-2 transition-colors hover:text-brand-red" onClick={() => setMobileOpen(false)}>
           <Search className="size-4" aria-hidden="true" />Reports
         </Link>
-        <Link href="/admin/settings" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+        <Link href="/admin/settings" {...mlnk('/admin/settings')} className="flex items-center gap-2 px-4 py-2 transition-colors hover:text-brand-red" onClick={() => setMobileOpen(false)}>
           <Cog className="size-4" aria-hidden="true" />System
         </Link>
       </>
@@ -390,7 +400,7 @@ export function Header() {
 
         {/* === CENTER: Desktop Navigation === */}
         <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
-          <CenterNav />
+          {CenterNav()}
         </nav>
 
         {/* === RIGHT: Language + Auth === */}
@@ -467,7 +477,7 @@ export function Header() {
           <Divider />
 
           {/* Role-specific nav links */}
-          <MobileNavItems />
+          {MobileNavItems()}
 
           <Divider />
 

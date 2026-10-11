@@ -23,7 +23,7 @@ export default async function UpcomingEventsPage({
   const user = session?.user;
 
   if (!user?.id) redirect(`/${locale}/auth/login`);
-  if (user.role === "organizer") redirect(`/${locale}/dashboard/organizer`);
+  if (user.role === "organizer") redirect(`/${locale}/organizer`);
   if (user.role === "admin") redirect(`/${locale}/admin`);
 
   const now = new Date();

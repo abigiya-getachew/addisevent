@@ -10,7 +10,7 @@ export default async function DashboardPage({
   const session = await auth();
   const role = session?.user?.role;
 
-  if (role === 'organizer') redirect(`/${locale}/dashboard/organizer`);
+  if (role === 'organizer') redirect(`/${locale}/organizer`);
   if (role === 'admin') redirect(`/${locale}/admin`);
 
   // attendee (default)

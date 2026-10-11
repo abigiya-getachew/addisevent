@@ -10,10 +10,11 @@ export default auth(function middleware(req) {
 
   // Locale-prefixed route guards
   const isAdminRoute = /^\/[^/]+\/admin(\/|$)/.test(pathname);
-  const isOrganizerRoute = /^\/[^/]+\/organizer(\/|$)/.test(pathname);
+  // Only sub-routes of /organizer require auth — the index is a public landing page
+  const isOrganizerSubRoute = /^\/[^/]+\/organizer\/.+/.test(pathname);
   const isDashboardRoute = /^\/[^/]+\/dashboard(\/|$)/.test(pathname);
 
-  if (isDashboardRoute || isOrganizerRoute || isAdminRoute) {
+  if (isDashboardRoute || isOrganizerSubRoute || isAdminRoute) {
     if (!isAuthenticated) {
       const loginUrl = new URL('/en/auth/login', req.url);
       loginUrl.searchParams.set('callbackUrl', pathname);
@@ -21,7 +22,7 @@ export default auth(function middleware(req) {
     }
   }
 
-  if (isOrganizerRoute) {
+  if (isOrganizerSubRoute) {
     if (role !== 'organizer' && role !== 'admin') {
       return NextResponse.redirect(new URL('/en/dashboard', req.url));
     }
@@ -34,7 +35,9 @@ export default auth(function middleware(req) {
     }
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", pathname);
+  return response;
 });
 
 export const config = {

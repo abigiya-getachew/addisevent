@@ -313,6 +313,62 @@ export const payments = pgTable(
   ]
 );
 
+// ─── Organizer Payouts ────────────────────────────────────────────────────────
+
+export const organizerPayoutAccounts = pgTable(
+  "organizer_payout_accounts",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    method: varchar("method", { length: 20 }).notNull(),
+    accountHolderName: varchar("account_holder_name", { length: 255 }).notNull(),
+    accountNumber: varchar("account_number", { length: 255 }).notNull(),
+    isVerified: boolean("is_verified").notNull().default(false),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    check(
+      "organizer_payout_accounts_method_check",
+      sql`${t.method} in ('telebirr', 'cbebirr', 'bank_transfer')`
+    ),
+  ]
+);
+
+export const organizerPayouts = pgTable(
+  "organizer_payouts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizerId: uuid("organizer_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    eventId: uuid("event_id").references(() => events.id, {
+      onDelete: "set null",
+    }),
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    status: varchar("status", { length: 20 }).notNull(),
+    referenceId: varchar("reference_id", { length: 255 }),
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("organizer_payouts_organizer_created_idx").on(
+      t.organizerId,
+      t.createdAt
+    ),
+    check(
+      "organizer_payouts_status_check",
+      sql`${t.status} in ('processing', 'sent', 'failed')`
+    ),
+    check("organizer_payouts_amount_check", sql`${t.amount} >= 0`),
+  ]
+);
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({

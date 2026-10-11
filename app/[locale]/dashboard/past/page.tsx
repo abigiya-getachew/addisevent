@@ -29,7 +29,7 @@ export default async function PastEventsPage({
   const session = await auth();
   const user = session?.user;
   if (!user?.id) redirect(`/${locale}/auth/login`);
-  if (user.role === "organizer") redirect(`/${locale}/dashboard/organizer`);
+  if (user.role === "organizer") redirect(`/${locale}/organizer`);
   if (user.role === "admin") redirect(`/${locale}/admin`);
 
   const rows = await db

@@ -72,7 +72,7 @@ export function LoginForm() {
       if (role === "admin") {
         router.push("/en/admin");
       } else if (role === "organizer") {
-        router.push("/en/dashboard/organizer");
+        router.push("/en/organizer");
       } else {
         router.push("/en/dashboard/user");
       }
