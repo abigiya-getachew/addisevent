@@ -1,47 +1,496 @@
-import { Menu, Sparkle } from "lucide-react";
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  Menu,
+  X,
+  ChevronDown,
+  LogOut,
+  User,
+  Settings,
+  Sparkle,
+  Ticket,
+  Bookmark,
+  BarChart2,
+  Calendar,
+  Plus,
+  DollarSign,
+  Users,
+  FileText,
+  Search,
+  Cog,
+} from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { supabaseBrowser } from '@/lib/auth';
+import { LanguageSwitcher } from './LanguageSwitcher';
+
+// ── helpers ────────────────────────────────────────────────────────────────────
+
+function getDisplayName(user: { email?: string; user_metadata?: { full_name?: string } } | null): string {
+  if (!user) return '';
+  if (user.user_metadata?.full_name) return user.user_metadata.full_name;
+  if (user.email) return user.email.split('@')[0];
+  return 'Account';
+}
+
+// ── Logo ───────────────────────────────────────────────────────────────────────
+
+function Logo() {
+  return (
+    <Link href="/" className="flex items-center gap-2">
+      <Sparkle aria-hidden="true" className="size-5 fill-brand-gold text-brand-gold" />
+      <span className="font-bold text-lg">
+        <span className="text-brand-red">Addis</span>
+        <span className="text-brand-blue">Event</span>
+      </span>
+    </Link>
+  );
+}
+
+// ── Divider ────────────────────────────────────────────────────────────────────
+
+function Divider() {
+  return <hr className="my-2 border-gray-100" />;
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export function Header() {
+  const { user, role } = useAuth();
+  const router = useRouter();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClick);
+    }
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [dropdownOpen]);
+
+  // Close mobile menu on route change / resize
+  useEffect(() => {
+    setMobileOpen(false);
+  }, []);
+
+  async function handleSignOut() {
+    await supabaseBrowser.auth.signOut();
+    setDropdownOpen(false);
+    setMobileOpen(false);
+    router.refresh();
+  }
+
+  const displayName = getDisplayName(user);
+
+  // ── Role-specific center nav items ──────────────────────────────────────────
+
+  function CenterNav() {
+    if (role === 'guest') {
+      return (
+        <>
+          <Link href="/events" className="hover:text-brand-red transition-colors">Events</Link>
+          <Link href="/organizer" className="hover:text-brand-red transition-colors">For Organizers</Link>
+          <Link href="/about" className="hover:text-brand-red transition-colors">About</Link>
+        </>
+      );
+    }
+
+    if (role === 'attendee') {
+      return (
+        <>
+          <Link href="/events" className="hover:text-brand-red transition-colors">Events</Link>
+          <Link href="/dashboard/tickets" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+            <Ticket className="size-4" aria-hidden="true" />My Tickets
+          </Link>
+          <Link href="/dashboard/saved" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+            <Bookmark className="size-4" aria-hidden="true" />Saved
+          </Link>
+          <Link href="/about" className="hover:text-brand-red transition-colors">About</Link>
+        </>
+      );
+    }
+
+    if (role === 'organizer') {
+      return (
+        <>
+          <Link href="/events" className="hover:text-brand-red transition-colors">Events</Link>
+          <Link href="/organizer" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+            <BarChart2 className="size-4" aria-hidden="true" />Dashboard
+          </Link>
+          <Link href="/organizer/events" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+            <Calendar className="size-4" aria-hidden="true" />My Events
+          </Link>
+          <Link href="/organizer/events/new" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+            <Plus className="size-4" aria-hidden="true" />Create Event
+          </Link>
+          <Link href="/organizer/settings#payouts" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+            <DollarSign className="size-4" aria-hidden="true" />Payouts
+          </Link>
+        </>
+      );
+    }
+
+    // admin
+    return (
+      <>
+        <Link href="/events" className="hover:text-brand-red transition-colors">Events</Link>
+        <Link href="/admin/users" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <Users className="size-4" aria-hidden="true" />Users
+        </Link>
+        <Link href="/admin/events" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <FileText className="size-4" aria-hidden="true" />All Events
+        </Link>
+        <Link href="/admin/reports" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <Search className="size-4" aria-hidden="true" />Reports
+        </Link>
+        <Link href="/admin/settings" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <Cog className="size-4" aria-hidden="true" />System
+        </Link>
+      </>
+    );
+  }
+
+  // ── Role-specific dropdown items ────────────────────────────────────────────
+
+  function DropdownItems() {
+    if (role === 'attendee') {
+      return (
+        <>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
+            onClick={() => setDropdownOpen(false)}
+          >
+            <User className="size-4" aria-hidden="true" />My Dashboard
+          </Link>
+          <Link
+            href="/dashboard/profile"
+            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
+            onClick={() => setDropdownOpen(false)}
+          >
+            <User className="size-4" aria-hidden="true" />Profile
+          </Link>
+          <Link
+            href="/dashboard/settings"
+            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
+            onClick={() => setDropdownOpen(false)}
+          >
+            <Settings className="size-4" aria-hidden="true" />Settings
+          </Link>
+          <Divider />
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors"
+          >
+            <LogOut className="size-4" aria-hidden="true" />Log Out
+          </button>
+        </>
+      );
+    }
+
+    if (role === 'organizer') {
+      return (
+        <>
+          <Link
+            href="/organizer/settings"
+            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
+            onClick={() => setDropdownOpen(false)}
+          >
+            <Settings className="size-4" aria-hidden="true" />Organizer Settings
+          </Link>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
+            onClick={() => setDropdownOpen(false)}
+          >
+            <User className="size-4" aria-hidden="true" />Switch to Attendee
+          </Link>
+          <Divider />
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors"
+          >
+            <LogOut className="size-4" aria-hidden="true" />Log Out
+          </button>
+        </>
+      );
+    }
+
+    if (role === 'admin') {
+      return (
+        <>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
+            onClick={() => setDropdownOpen(false)}
+          >
+            <User className="size-4" aria-hidden="true" />Switch → Attendee
+          </Link>
+          <Link
+            href="/organizer"
+            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
+            onClick={() => setDropdownOpen(false)}
+          >
+            <BarChart2 className="size-4" aria-hidden="true" />Switch → Organizer
+          </Link>
+          <Link
+            href="/admin"
+            className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
+            onClick={() => setDropdownOpen(false)}
+          >
+            <Cog className="size-4" aria-hidden="true" />Admin Panel
+          </Link>
+          <Divider />
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors"
+          >
+            <LogOut className="size-4" aria-hidden="true" />Log Out
+          </button>
+        </>
+      );
+    }
+
+    return null;
+  }
+
+  // ── Mobile role-specific items ───────────────────────────────────────────────
+
+  function MobileNavItems() {
+    if (role === 'guest') {
+      return (
+        <>
+          <Link href="/events" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>Events</Link>
+          <Link href="/organizer" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>For Organizers</Link>
+          <Link href="/about" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>About</Link>
+        </>
+      );
+    }
+
+    if (role === 'attendee') {
+      return (
+        <>
+          <Link href="/events" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>Events</Link>
+          <Link href="/dashboard/tickets" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+            <Ticket className="size-4" aria-hidden="true" />My Tickets
+          </Link>
+          <Link href="/dashboard/saved" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+            <Bookmark className="size-4" aria-hidden="true" />Saved
+          </Link>
+          <Link href="/about" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>About</Link>
+        </>
+      );
+    }
+
+    if (role === 'organizer') {
+      return (
+        <>
+          <Link href="/events" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>Events</Link>
+          <Link href="/organizer" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+            <BarChart2 className="size-4" aria-hidden="true" />Dashboard
+          </Link>
+          <Link href="/organizer/events" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+            <Calendar className="size-4" aria-hidden="true" />My Events
+          </Link>
+          <Link href="/organizer/events/new" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+            <Plus className="size-4" aria-hidden="true" />Create Event
+          </Link>
+          <Link href="/organizer/settings#payouts" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+            <DollarSign className="size-4" aria-hidden="true" />Payouts
+          </Link>
+        </>
+      );
+    }
+
+    // admin
+    return (
+      <>
+        <Link href="/events" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>Events</Link>
+        <Link href="/admin/users" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <Users className="size-4" aria-hidden="true" />Users
+        </Link>
+        <Link href="/admin/events" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <FileText className="size-4" aria-hidden="true" />All Events
+        </Link>
+        <Link href="/admin/reports" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <Search className="size-4" aria-hidden="true" />Reports
+        </Link>
+        <Link href="/admin/settings" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <Cog className="size-4" aria-hidden="true" />System
+        </Link>
+      </>
+    );
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+
   return (
-   <header className="sticky top-0 z-50 bg-cream/90 backdrop-blur-sm shadow-sm">
+    <header className="sticky top-0 z-50 bg-cream/90 backdrop-blur-sm shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+
         {/* === LEFT: Logo === */}
-        <a href="/" className="flex items-center gap-2">
-          <Sparkle aria-hidden="true" className="size-5 fill-brand-gold text-brand-gold" />
-          <span className="font-bold text-lg">
-            <span className="text-brand-red">Addis</span>
-            <span className="text-brand-blue">Event</span>
-          </span>
-        </a>
+        <Logo />
 
         {/* === CENTER: Desktop Navigation === */}
-        <nav className="hidden md:flex items-center gap-8">
-          <a href="/events" className="hover:text-brand-red">Events</a>
-          <a href="/organizer" className="hover:text-brand-red">Organizers</a>
-          <a href="/about" className="hover:text-brand-red">About</a>
+        <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
+          <CenterNav />
         </nav>
 
         {/* === RIGHT: Language + Auth === */}
         <div className="flex items-center gap-3">
-          {/* Language Toggle */}
-          <button className="px-3 py-1 rounded-full border border-brand-gold text-sm">
-            EN
-          </button>
-          
-          {/* Sign In Button — shown when logged out */}
-          <a 
-            href="/login" 
-            className="hidden sm:inline px-4 py-2 bg-brand-red text-white rounded-full hover:bg-opacity-90 transition"
-          >
-            Sign In
-          </a>
+          <LanguageSwitcher />
 
-          {/* Mobile Menu Button */}
-          <button className="md:hidden" aria-label="Open navigation menu">
-            <Menu aria-hidden="true" className="size-6" />
+          {role === 'guest' ? (
+            <>
+              <Link
+                href="/auth/login"
+                className="hidden sm:inline px-4 py-2 text-sm text-brand-red border border-brand-red rounded-full hover:bg-brand-red hover:text-white transition-colors"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="hidden sm:inline px-4 py-2 text-sm bg-brand-red text-white rounded-full hover:bg-opacity-90 transition-colors"
+              >
+                Create Account
+              </Link>
+            </>
+          ) : (
+            <div className="relative hidden sm:block" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-1 px-3 py-2 rounded-full border border-brand-gold text-sm font-medium hover:bg-brand-gold/10 transition-colors"
+                aria-expanded={dropdownOpen}
+                aria-haspopup="true"
+              >
+                <User className="size-4 text-brand-red" aria-hidden="true" />
+                <span className="max-w-[120px] truncate">{displayName}</span>
+                <ChevronDown className={`size-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50" role="menu">
+                  <DropdownItems />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-1"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen
+              ? <X aria-hidden="true" className="size-6" />
+              : <Menu aria-hidden="true" className="size-6" />
+            }
           </button>
         </div>
-
       </div>
+
+      {/* === MOBILE MENU === */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-gray-100 bg-white pb-4" role="navigation" aria-label="Mobile navigation">
+          {/* Logo */}
+          <div className="px-4 py-3">
+            <Logo />
+          </div>
+
+          <Divider />
+
+          {/* Role-specific nav links */}
+          <MobileNavItems />
+
+          <Divider />
+
+          {/* Language */}
+          <div className="px-4 py-2">
+            <LanguageSwitcher />
+          </div>
+
+          <Divider />
+
+          {/* Auth section */}
+          {role === 'guest' ? (
+            <div className="px-4 flex flex-col gap-2 pt-1">
+              <Link
+                href="/auth/login"
+                className="block text-center px-4 py-2 text-sm text-brand-red border border-brand-red rounded-full hover:bg-brand-red hover:text-white transition-colors"
+                onClick={() => setMobileOpen(false)}
+              >
+                Log In
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="block text-center px-4 py-2 text-sm bg-brand-red text-white rounded-full hover:bg-opacity-90 transition-colors"
+                onClick={() => setMobileOpen(false)}
+              >
+                Create Account
+              </Link>
+            </div>
+          ) : (
+            <div className="px-4 flex flex-col gap-1 pt-1">
+              <p className="px-0 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                {displayName}
+              </p>
+              {role === 'attendee' && (
+                <>
+                  <Link href="/dashboard" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                    <User className="size-4" aria-hidden="true" />My Dashboard
+                  </Link>
+                  <Link href="/dashboard/profile" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                    <User className="size-4" aria-hidden="true" />Profile
+                  </Link>
+                  <Link href="/dashboard/settings" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                    <Settings className="size-4" aria-hidden="true" />Settings
+                  </Link>
+                </>
+              )}
+              {role === 'organizer' && (
+                <>
+                  <Link href="/organizer/settings" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                    <Settings className="size-4" aria-hidden="true" />Organizer Settings
+                  </Link>
+                  <Link href="/dashboard" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                    <User className="size-4" aria-hidden="true" />Switch to Attendee
+                  </Link>
+                </>
+              )}
+              {role === 'admin' && (
+                <>
+                  <Link href="/dashboard" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                    <User className="size-4" aria-hidden="true" />Switch → Attendee
+                  </Link>
+                  <Link href="/organizer" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                    <BarChart2 className="size-4" aria-hidden="true" />Switch → Organizer
+                  </Link>
+                  <Link href="/admin" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                    <Cog className="size-4" aria-hidden="true" />Admin Panel
+                  </Link>
+                </>
+              )}
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 py-2 text-sm text-red-600 hover:text-red-700 transition-colors mt-1"
+              >
+                <LogOut className="size-4" aria-hidden="true" />Log Out
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 }
