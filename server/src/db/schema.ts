@@ -11,8 +11,10 @@ import {
   jsonb,
   index,
   primaryKey,
+  unique,
+  check,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -73,6 +75,9 @@ export const users = pgTable(
     emailVerified: timestamp("email_verified_at", { withTimezone: true }),
     isEmailVerified: boolean("email_verified").notNull().default(false),
     phoneVerified: boolean("phone_verified").notNull().default(false),
+    interests: text("interests").array().notNull().default([]),
+    emailNotifications: boolean("email_notifications").notNull().default(true),
+    smsReminders: boolean("sms_reminders").notNull().default(true),
     // Used by NextAuth adapter (OAuth profile images)
     image: text("image"),
     avatarUrl: text("avatar_url"),
@@ -126,6 +131,52 @@ export const events = pgTable(
     index("events_status_idx").on(t.status),
     index("events_category_idx").on(t.category),
     index("events_start_at_idx").on(t.startAt),
+  ]
+);
+
+export const savedEvents = pgTable(
+  "saved_events",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.eventId] }),
+    index("saved_events_event_idx").on(t.eventId),
+  ]
+);
+
+export const eventReviews = pgTable(
+  "event_reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    rating: integer("rating").notNull(),
+    review: text("review"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("event_reviews_event_idx").on(t.eventId),
+    index("event_reviews_user_idx").on(t.userId),
+    unique("event_reviews_user_event_unique").on(t.userId, t.eventId),
+    check("event_reviews_rating_check", sql`${t.rating} between 1 and 5`),
   ]
 );
 
@@ -267,6 +318,8 @@ export const payments = pgTable(
 export const usersRelations = relations(users, ({ many }) => ({
   events: many(events),
   bookings: many(bookings),
+  savedEvents: many(savedEvents),
+  eventReviews: many(eventReviews),
 }));
 
 export const eventsRelations = relations(events, ({ one, many }) => ({
@@ -276,6 +329,30 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
   }),
   tiers: many(ticketTiers),
   bookings: many(bookings),
+  savedEvents: many(savedEvents),
+  reviews: many(eventReviews),
+}));
+
+export const savedEventsRelations = relations(savedEvents, ({ one }) => ({
+  user: one(users, {
+    fields: [savedEvents.userId],
+    references: [users.id],
+  }),
+  event: one(events, {
+    fields: [savedEvents.eventId],
+    references: [events.id],
+  }),
+}));
+
+export const eventReviewsRelations = relations(eventReviews, ({ one }) => ({
+  user: one(users, {
+    fields: [eventReviews.userId],
+    references: [users.id],
+  }),
+  event: one(events, {
+    fields: [eventReviews.eventId],
+    references: [events.id],
+  }),
 }));
 
 export const ticketTiersRelations = relations(ticketTiers, ({ one, many }) => ({

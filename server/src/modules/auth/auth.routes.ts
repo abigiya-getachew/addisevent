@@ -1,9 +1,25 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { SignJWT } from "jose";
 import { registerUser, loginUser, getUserById } from "./auth.service.js";
 import { requireAuth } from "../../middleware/auth.middleware.js";
 import { authRateLimit } from "../../middleware/rate-limit.js";
 import { validateBody } from "../../middleware/validate.js";
+
+// ─── JWT helper ───────────────────────────────────────────────────────────────
+
+const JWT_EXPIRY = "7d";
+
+async function signToken(userId: string): Promise<string> {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET is not set");
+  const key = new TextEncoder().encode(secret);
+  return new SignJWT({ sub: userId })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(JWT_EXPIRY)
+    .sign(key);
+}
 
 // ─── Validators ───────────────────────────────────────────────────────────────
 
@@ -45,7 +61,8 @@ authRoutes.post(
   async (c) => {
     const body = c.get("validatedBody") as z.infer<typeof RegisterSchema>;
     const user = await registerUser(body);
-    return c.json({ user }, 201);
+    const token = await signToken(user.id);
+    return c.json({ user, token }, 201);
   }
 );
 
@@ -62,7 +79,8 @@ authRoutes.post(
   async (c) => {
     const body = c.get("validatedBody") as z.infer<typeof LoginSchema>;
     const user = await loginUser(body);
-    return c.json({ user });
+    const token = await signToken(user.id);
+    return c.json({ user, token });
   }
 );
 

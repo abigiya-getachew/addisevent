@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   Menu,
   X,
@@ -22,6 +22,7 @@ import {
   Search,
   Cog,
 } from 'lucide-react';
+import { SignOutForm } from '@/components/auth/SignOutForm';
 import { useAuth } from '@/hooks/use-auth';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
@@ -37,9 +38,9 @@ function getDisplayName(user: { name?: string | null; email?: string | null; pho
 
 // ── Logo ───────────────────────────────────────────────────────────────────────
 
-function Logo() {
+function Logo({ href }: { href: string }) {
   return (
-    <Link href="/" className="flex items-center gap-2">
+    <Link href={href} className="flex items-center gap-2" aria-label="AddisEvent home">
       <Sparkle aria-hidden="true" className="size-5 fill-brand-gold text-brand-gold" />
       <span className="font-bold text-lg">
         <span className="text-brand-red">Addis</span>
@@ -58,8 +59,8 @@ function Divider() {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function Header() {
-  const { user, role, loading, signOut } = useAuth();
-  const router = useRouter();
+  const { user, role, loading } = useAuth();
+  const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -111,14 +112,16 @@ export function Header() {
     setMobileOpen(false);
   }, []);
 
-  async function handleSignOut() {
-    signOut();
-    setDropdownOpen(false);
-    setMobileOpen(false);
-    router.push('/');
-  }
-
   const displayName = getDisplayName(user);
+  const locale = pathname.match(/^\/(en|am)(?:\/|$)/)?.[1] ?? 'en';
+  const logoHref =
+    role === 'attendee'
+      ? `/${locale}/dashboard/user`
+      : role === 'organizer'
+        ? `/${locale}/dashboard/organizer`
+        : role === 'admin'
+          ? `/${locale}/admin`
+          : '/';
 
   // ── Role-specific center nav items ──────────────────────────────────────────
 
@@ -137,10 +140,10 @@ export function Header() {
       return (
         <>
           <Link href="/events" className="hover:text-brand-red transition-colors">Events</Link>
-          <Link href="/dashboard/tickets" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <Link href={`/${locale}/dashboard/user/tickets`} className="flex items-center gap-1 hover:text-brand-red transition-colors">
             <Ticket className="size-4" aria-hidden="true" />My Tickets
           </Link>
-          <Link href="/dashboard/saved" className="flex items-center gap-1 hover:text-brand-red transition-colors">
+          <Link href={`/${locale}/dashboard/user/saved`} className="flex items-center gap-1 hover:text-brand-red transition-colors">
             <Bookmark className="size-4" aria-hidden="true" />Saved
           </Link>
           <Link href="/about" className="hover:text-brand-red transition-colors">About</Link>
@@ -195,7 +198,7 @@ export function Header() {
       return (
         <>
           <Link
-            href="/dashboard"
+            href={`/${locale}/dashboard/user`}
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
             role="menuitem"
@@ -204,7 +207,7 @@ export function Header() {
             <User className="size-4" aria-hidden="true" />My Dashboard
           </Link>
           <Link
-            href="/dashboard/profile"
+            href={`/${locale}/dashboard/profile`}
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
             role="menuitem"
@@ -213,7 +216,7 @@ export function Header() {
             <User className="size-4" aria-hidden="true" />Profile
           </Link>
           <Link
-            href="/dashboard/settings"
+            href={`/${locale}/dashboard/profile`}
             className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 hover:text-brand-red transition-colors"
             onClick={() => setDropdownOpen(false)}
             role="menuitem"
@@ -222,14 +225,12 @@ export function Header() {
             <Settings className="size-4" aria-hidden="true" />Settings
           </Link>
           <Divider />
-          <button
-            onClick={handleSignOut}
+          <SignOutForm
+            menuItem
             className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors"
-            role="menuitem"
-            tabIndex={-1}
           >
-            <LogOut className="size-4" aria-hidden="true" />Log Out
-          </button>
+              <LogOut className="size-4" aria-hidden="true" />Log Out
+          </SignOutForm>
         </>
       );
     }
@@ -256,14 +257,12 @@ export function Header() {
             <User className="size-4" aria-hidden="true" />Switch to Attendee
           </Link>
           <Divider />
-          <button
-            onClick={handleSignOut}
+          <SignOutForm
+            menuItem
             className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors"
-            role="menuitem"
-            tabIndex={-1}
           >
-            <LogOut className="size-4" aria-hidden="true" />Log Out
-          </button>
+              <LogOut className="size-4" aria-hidden="true" />Log Out
+          </SignOutForm>
         </>
       );
     }
@@ -299,14 +298,12 @@ export function Header() {
             <Cog className="size-4" aria-hidden="true" />Admin Panel
           </Link>
           <Divider />
-          <button
-            onClick={handleSignOut}
+          <SignOutForm
+            menuItem
             className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors"
-            role="menuitem"
-            tabIndex={-1}
           >
-            <LogOut className="size-4" aria-hidden="true" />Log Out
-          </button>
+              <LogOut className="size-4" aria-hidden="true" />Log Out
+          </SignOutForm>
         </>
       );
     }
@@ -331,10 +328,10 @@ export function Header() {
       return (
         <>
           <Link href="/events" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>Events</Link>
-          <Link href="/dashboard/tickets" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <Link href={`/${locale}/dashboard/user/tickets`} className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
             <Ticket className="size-4" aria-hidden="true" />My Tickets
           </Link>
-          <Link href="/dashboard/saved" className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+          <Link href={`/${locale}/dashboard/user/saved`} className="flex items-center gap-2 px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
             <Bookmark className="size-4" aria-hidden="true" />Saved
           </Link>
           <Link href="/about" className="block px-4 py-2 hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>About</Link>
@@ -389,7 +386,7 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
 
         {/* === LEFT: Logo === */}
-        <Logo />
+        <Logo href={logoHref} />
 
         {/* === CENTER: Desktop Navigation === */}
         <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
@@ -406,13 +403,13 @@ export function Header() {
           ) : role === 'guest' ? (
             <>
               <Link
-                href="/auth/login"
+                href={`/${locale}/auth/login`}
                 className="hidden sm:inline px-4 py-2 text-sm text-brand-red border border-brand-red rounded-full hover:bg-brand-red hover:text-white transition-colors"
               >
                 Log In
               </Link>
               <Link
-                href="/auth/signup"
+                href={`/${locale}/auth/register`}
                 className="hidden sm:inline px-4 py-2 text-sm bg-brand-red text-white rounded-full hover:bg-opacity-90 transition-colors"
               >
                 Create Account
@@ -464,7 +461,7 @@ export function Header() {
         <div className="md:hidden border-t border-gray-100 bg-white pb-4" role="navigation" aria-label="Mobile navigation">
           {/* Logo */}
           <div className="px-4 py-3">
-            <Logo />
+            <Logo href={logoHref} />
           </div>
 
           <Divider />
@@ -485,14 +482,14 @@ export function Header() {
           {loading ? null : role === 'guest' ? (
             <div className="px-4 flex flex-col gap-2 pt-1">
               <Link
-                href="/auth/login"
+                href={`/${locale}/auth/login`}
                 className="block text-center px-4 py-2 text-sm text-brand-red border border-brand-red rounded-full hover:bg-brand-red hover:text-white transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
                 Log In
               </Link>
               <Link
-                href="/auth/signup"
+                href={`/${locale}/auth/register`}
                 className="block text-center px-4 py-2 text-sm bg-brand-red text-white rounded-full hover:bg-opacity-90 transition-colors"
                 onClick={() => setMobileOpen(false)}
               >
@@ -506,13 +503,13 @@ export function Header() {
               </p>
               {role === 'attendee' && (
                 <>
-                  <Link href="/dashboard" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                  <Link href={`/${locale}/dashboard/user`} className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
                     <User className="size-4" aria-hidden="true" />My Dashboard
                   </Link>
-                  <Link href="/dashboard/profile" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                  <Link href={`/${locale}/dashboard/profile`} className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
                     <User className="size-4" aria-hidden="true" />Profile
                   </Link>
-                  <Link href="/dashboard/settings" className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
+                  <Link href={`/${locale}/dashboard/profile`} className="flex items-center gap-2 py-2 text-sm hover:text-brand-red transition-colors" onClick={() => setMobileOpen(false)}>
                     <Settings className="size-4" aria-hidden="true" />Settings
                   </Link>
                 </>
@@ -540,12 +537,12 @@ export function Header() {
                   </Link>
                 </>
               )}
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-2 py-2 text-sm text-red-600 hover:text-red-700 transition-colors mt-1"
+              <SignOutForm
+                formClassName="mt-1"
+                className="flex items-center gap-2 py-2 text-sm text-red-600 hover:text-red-700 transition-colors"
               >
-                <LogOut className="size-4" aria-hidden="true" />Log Out
-              </button>
+                  <LogOut className="size-4" aria-hidden="true" />Log Out
+              </SignOutForm>
             </div>
           )}
         </div>

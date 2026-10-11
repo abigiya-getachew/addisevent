@@ -72,9 +72,9 @@ export function LoginForm() {
       if (role === "admin") {
         router.push("/en/admin");
       } else if (role === "organizer") {
-        router.push("/en/organizer");
+        router.push("/en/dashboard/organizer");
       } else {
-        router.push("/en/dashboard");
+        router.push("/en/dashboard/user");
       }
     } catch {
       setError("Could not reach the server. Please try again.");

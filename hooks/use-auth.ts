@@ -25,8 +25,9 @@ export function useAuth() {
     role,
     loading,
     accessToken: (session as { accessToken?: string } | null)?.accessToken ?? null,
-    signOut: () => nextAuthSignOut({ callbackUrl: '/' }),
+    signOut: (callbackUrl = '/') =>
+      nextAuthSignOut({ redirectTo: callbackUrl }),
     /** @deprecated alias for signOut — kept for backward compatibility */
-    clearSession: () => nextAuthSignOut({ callbackUrl: '/' }),
+    clearSession: () => nextAuthSignOut({ redirectTo: '/' }),
   };
 }
