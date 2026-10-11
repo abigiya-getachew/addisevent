@@ -124,17 +124,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true;
     },
 
-    async jwt({ token, user, trigger }) {
-      // On sign-in, user object is present — persist custom fields to token
-      if (user || trigger === 'signIn') {
-        if (user) {
-          token.id = user.id ?? undefined;
-          token.role = (user as { role?: Role }).role;
-          token.phone = (user as { phone?: string | null }).phone ?? undefined;
-          if (user.name) token.name = user.name;
-          token.accessToken = user.id ?? undefined; // used as Bearer token to Hono
-        }
+    async jwt({ token, user }) {
+      // On sign-in, user object is present — persist custom fields to token.
+      // Pass-through (token.role ?? existing) runs unconditionally so token
+      // rotation and update() calls do not silently drop these fields.
+      if (user) {
+        token.id = user.id ?? undefined;
+        token.accessToken = user.id ?? undefined; // Bearer token sent to Hono
+        if (user.name) token.name = user.name;
       }
+      token.role = ((user as { role?: Role } | undefined)?.role ?? token.role) as Role | undefined;
+      token.phone = ((user as { phone?: string | null } | undefined)?.phone ?? token.phone) as string | null | undefined;
       return token;
     },
 

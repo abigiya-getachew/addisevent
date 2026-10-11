@@ -58,7 +58,7 @@ function Divider() {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function Header() {
-  const { user, role, loading, clearSession } = useAuth();
+  const { user, role, loading, signOut } = useAuth();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -112,7 +112,7 @@ export function Header() {
   }, []);
 
   async function handleSignOut() {
-    clearSession();
+    signOut();
     setDropdownOpen(false);
     setMobileOpen(false);
     router.push('/');

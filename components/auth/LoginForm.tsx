@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Smartphone, Mail } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 
 // ── Social / quick-login options ─────────────────────────────────────────────
 const QUICK_OPTIONS = [
@@ -63,13 +63,11 @@ export function LoginForm() {
         return;
       }
 
-      // Redirect based on role — fetch the session to read the role
-      // then route. Simplest: use router.push to /en/dashboard and let
-      // the middleware/redirect callback handle role-specific routing.
-      // We use a full reload so the session cookie is picked up.
-      const res = await fetch("/api/auth/session");
-      const session = await res.json() as { user?: { role?: string } } | null;
-      const role = session?.user?.role;
+      // Use getSession() (not raw fetch) so Next.js waits for the session
+      // cookie to be committed before reading the role. This avoids the race
+      // where fetch('/api/auth/session') fires before the cookie is visible.
+      const session = await getSession();
+      const role = session?.user ? (session.user as { role?: string }).role : undefined;
 
       if (role === "admin") {
         router.push("/en/admin");

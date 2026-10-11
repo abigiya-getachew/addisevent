@@ -50,6 +50,7 @@ export function RegisterForm({ locale }: { locale: string }) {
     const formData = new FormData(event.currentTarget);
     const name = String(formData.get("name") ?? "").trim();
     const phone = String(formData.get("phone") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
 
     try {
@@ -75,9 +76,11 @@ export function RegisterForm({ locale }: { locale: string }) {
         return;
       }
 
-      // Auto sign-in after successful registration
+      // Auto sign-in after successful registration.
+      // Use whichever identifier was actually provided — phone takes priority,
+      // fall back to email so email-only registrations also auto-sign-in.
       const signInResult = await signIn("credentials", {
-        identifier: phone,
+        identifier: phone || email,
         password,
         redirect: false,
       });

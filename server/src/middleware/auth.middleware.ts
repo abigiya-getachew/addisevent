@@ -3,6 +3,7 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { db, schema } from "../db/index.js";
 import { eq } from "drizzle-orm";
+import { jwtVerify } from "jose";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,20 +28,29 @@ declare module "hono" {
 /**
  * Verifies the Authorization: Bearer <token> header.
  *
- * Auth.js v5 stores the user's UUID as token.sub and exposes it as
- * session.accessToken. The client sends this UUID as the Bearer value.
- * We treat it as a user ID — look it up in the DB directly for authoritative
- * role data. This sidesteps JWE complexity entirely for the MVP.
- *
- * UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (36 chars)
+ * Accepts HS256 JWTs signed with AUTH_SECRET (issued by auth.routes.ts for
+ * API/mobile clients). Verifies signature and expiry via jose's jwtVerify,
+ * then fetches authoritative user/role data from the DB using token.sub.
  */
 async function verifyToken(token: string): Promise<AuthUser> {
-  // Basic sanity check: must look like a UUID (36-char hex with hyphens)
-  const uuidPattern =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) {
+    throw new HTTPException(500, { message: "AUTH_SECRET is not configured" });
+  }
 
-  if (!uuidPattern.test(token)) {
-    throw new HTTPException(401, { message: "Malformed token" });
+  let sub: string;
+  try {
+    const secretBytes = new TextEncoder().encode(secret);
+    const { payload } = await jwtVerify(token, secretBytes, {
+      algorithms: ["HS256"],
+    });
+    if (!payload.sub) {
+      throw new HTTPException(401, { message: "Token missing subject" });
+    }
+    sub = payload.sub;
+  } catch (err) {
+    if (err instanceof HTTPException) throw err;
+    throw new HTTPException(401, { message: "Invalid or expired token" });
   }
 
   const [user] = await db
@@ -53,7 +63,7 @@ async function verifyToken(token: string): Promise<AuthUser> {
       locale: schema.users.locale,
     })
     .from(schema.users)
-    .where(eq(schema.users.id, token))
+    .where(eq(schema.users.id, sub))
     .limit(1);
 
   if (!user) {
