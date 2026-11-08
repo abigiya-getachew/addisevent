@@ -2,7 +2,9 @@ import { eq, or } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import bcrypt from "bcryptjs";
 import { db, schema } from "../../db/index.js";
-import type { NewUser, User } from "../../db/schema.js";
+import type { User } from "../../db/schema.js";
+
+type NewUser = typeof schema.users.$inferInsert;
 
 const BCRYPT_ROUNDS = 12;
 

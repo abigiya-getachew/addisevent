@@ -22,13 +22,12 @@ export default async function OrganizerSettingsPage({
     db
       .select()
       .from(organizerPayoutAccounts)
-      .where(eq(organizerPayoutAccounts.userId, session.user.id))
       .limit(1)
       .catch(() => []),
     db
       .select()
       .from(organizerPayouts)
-      .where(eq(organizerPayouts.organizerId, session.user.id))
+      .where(eq(organizerPayouts.userId, session.user.id))
       .orderBy(sql`${organizerPayouts.createdAt} desc`)
       .limit(20)
       .catch(() => []),

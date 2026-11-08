@@ -50,9 +50,9 @@ const eventSchema = z.object({
 });
 
 const payoutSchema = z.object({
-  method: z.enum(["telebirr", "cbebirr", "bank_transfer"]),
-  accountHolderName: z.string().trim().min(2).max(255),
-  accountNumber: z.string().trim().min(4).max(255),
+  accountName: z.string().trim().min(2).max(255),
+  accountNumber: z.string().trim().min(4).max(100),
+  phone: z.string().trim().max(20).optional(),
 });
 
 async function requireOrganizer() {
@@ -414,33 +414,18 @@ export async function saveOrganizerPayoutAccount(
   _previous: { error?: string; success?: string },
   formData: FormData,
 ) {
-  const user = await requireOrganizer();
+  await requireOrganizer();
   const parsed = payoutSchema.safeParse({
-    method: formText(formData, "method"),
-    accountHolderName: formText(formData, "accountHolderName"),
+    accountName: formText(formData, "accountName"),
     accountNumber: formText(formData, "accountNumber"),
+    phone: formText(formData, "phone") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Check your payout account details." };
   }
 
   try {
-    await db
-      .insert(organizerPayoutAccounts)
-      .values({
-        userId: user.id,
-        ...parsed.data,
-        isVerified: false,
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: organizerPayoutAccounts.userId,
-        set: {
-          ...parsed.data,
-          isVerified: false,
-          updatedAt: new Date(),
-        },
-      });
+    await db.insert(organizerPayoutAccounts).values(parsed.data);
     revalidatePath("/[locale]/organizer/settings", "page");
     return { success: "Payout account saved. Verification is pending provider confirmation." };
   } catch (error) {

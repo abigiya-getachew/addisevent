@@ -1,4 +1,6 @@
 import { Metadata } from "next";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import "../globals.css";
 
 import { Hero } from "../../components/sections/home/Hero";
@@ -14,8 +16,12 @@ export default async function Home({
 }: {
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const [{ locale }, session] = await Promise.all([params, auth()]);
 
+  // Redirect signed-in users straight to their dashboard
+  if (session?.user?.role === "admin") redirect(`/${locale}/admin`);
+  if (session?.user?.role === "organizer") redirect(`/${locale}/organizer`);
+  if (session?.user?.role === "attendee") redirect(`/${locale}/dashboard/user`);
   return <div>
     <Hero />
     <FeaturedEvents locale={locale} />

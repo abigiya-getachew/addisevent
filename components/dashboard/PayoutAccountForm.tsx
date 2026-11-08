@@ -16,35 +16,37 @@ export function PayoutAccountForm({ existing }: { existing: PayoutAccount | null
   return (
     <form action={formAction} className="space-y-5">
       <div>
-        <label htmlFor="method" className={labelCls}>Preferred Method *</label>
-        <select id="method" name="method" required className={inputCls} defaultValue={existing?.method ?? ""}>
-          <option value="" disabled>Select method</option>
-          <option value="telebirr">Telebirr</option>
-          <option value="cbebirr">CBE Birr</option>
-          <option value="bank_transfer">Bank Transfer</option>
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="accountHolderName" className={labelCls}>Account Holder Name *</label>
+        <label htmlFor="accountName" className={labelCls}>Account Holder Name *</label>
         <input
-          id="accountHolderName"
-          name="accountHolderName"
+          id="accountName"
+          name="accountName"
           required
           className={inputCls}
-          defaultValue={existing?.accountHolderName ?? ""}
+          defaultValue={existing?.accountName ?? ""}
           placeholder="Full name as registered"
         />
       </div>
 
       <div>
-        <label htmlFor="accountNumber" className={labelCls}>Phone / Account Number *</label>
+        <label htmlFor="accountNumber" className={labelCls}>Account Number *</label>
         <input
           id="accountNumber"
           name="accountNumber"
           required
           className={inputCls}
           defaultValue={existing?.accountNumber ?? ""}
+          placeholder="e.g. 1000123456789"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="phone" className={labelCls}>Phone (Telebirr / CBE Birr)</label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          className={inputCls}
+          defaultValue={existing?.phone ?? ""}
           placeholder="e.g. 0911 234 567"
         />
       </div>

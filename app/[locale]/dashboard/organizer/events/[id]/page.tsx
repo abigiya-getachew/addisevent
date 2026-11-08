@@ -108,8 +108,9 @@ export default async function OrganizerEventPage({
       ? await db
           .select()
           .from(organizerPayouts)
-          .where(and(eq(organizerPayouts.organizerId, session.user.id), eq(organizerPayouts.eventId, id)))
+          .where(eq(organizerPayouts.userId, session.user.id))
           .orderBy(sql`${organizerPayouts.createdAt} desc`)
+          .catch(() => [])
       : [];
 
   const platformFeeRate = 0.05;
@@ -368,7 +369,7 @@ export default async function OrganizerEventPage({
                           {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
                         </span>
                       </td>
-                      <td className="py-3 font-mono text-xs text-text-secondary">{p.referenceId ?? "—"}</td>
+                      <td className="py-3 font-mono text-xs text-text-secondary">{p.id.slice(0, 8)}…</td>
                     </tr>
                   ))}
                 </tbody>

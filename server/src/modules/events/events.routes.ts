@@ -1,127 +1,70 @@
-import { Hono } from "hono";
-import { z } from "zod";
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { requireAuth, requireRole } from '../../middleware/auth.middleware.js';
 import {
-  listEvents,
+  getPublishedEvents,
+  getOrganizerEvents,
   getEventById,
   createEvent,
   updateEvent,
-  publishEvent,
-  cancelEvent,
-  deleteEvent,
-} from "./events.service.js";
-import {
-  CreateEventSchema,
-  UpdateEventSchema,
-  ListEventsSchema,
-} from "./events.validator.js";
-import {
-  requireAuth,
-  requireRole,
-} from "../../middleware/auth.middleware.js";
-import { apiRateLimit } from "../../middleware/rate-limit.js";
-import { validateBody, validateQuery } from "../../middleware/validate.js";
+} from './events.service.js';
+import { CreateEventSchema } from './events.schema.js';
 
-export const eventsRoutes = new Hono();
+const eventsRoutes = new Hono();
 
-/**
- * GET /api/v1/events
- * Public — list published events with filters.
- */
-eventsRoutes.get(
-  "/",
-  apiRateLimit,
-  validateQuery(ListEventsSchema),
-  async (c) => {
-    const query = c.get("validatedQuery") as z.infer<typeof ListEventsSchema>;
-    const result = await listEvents(query);
-    return c.json(result);
-  }
-);
-
-/**
- * GET /api/v1/events/:id
- * Public — get a single event with its ticket tiers.
- */
-eventsRoutes.get("/:id", apiRateLimit, async (c) => {
-  const id = c.req.param("id");
-  const event = await getEventById(id);
-  return c.json({ event });
+// ========== PUBLIC ROUTES — Anyone can view ==========
+eventsRoutes.get('/', async (c) => {
+  const events = await getPublishedEvents();
+  return c.json({ data: events });
 });
 
-/**
- * POST /api/v1/events
- * Organizer — create a new event with tiers.
- */
+eventsRoutes.get('/:id', async (c) => {
+  const id = c.req.param('id');
+  const event = await getEventById(id);
+  
+  if (!event) return c.json({ error: 'Event not found' }, 404);
+  return c.json({ data: event });
+});
+
+// ========== PROTECTED — Must be logged in ==========
+eventsRoutes.use('*', requireAuth);
+
+// Organizer: See their own events
+eventsRoutes.get('/my/organizer', requireRole('organizer', 'admin'), async (c) => {
+  const user = c.get('user');
+  const myEvents = await getOrganizerEvents(user.id);
+  return c.json({ data: myEvents });
+});
+
+// Organizer: Create new event
 eventsRoutes.post(
-  "/",
-  requireAuth,
-  requireRole("organizer", "admin"),
-  validateBody(CreateEventSchema),
+  '/',
+  requireRole('organizer', 'admin'),
+  zValidator('json', CreateEventSchema),
   async (c) => {
-    const body = c.get("validatedBody") as z.infer<typeof CreateEventSchema>;
-    const event = await createEvent(c.var.user.id, body);
-    return c.json({ event }, 201);
+    const user = c.get('user');
+    const data = c.req.valid('json');
+    
+    const newEvent = await createEvent(user.id, data);
+    return c.json({ data: newEvent }, 201);
   }
 );
 
-/**
- * PATCH /api/v1/events/:id
- * Organizer — update event metadata.
- */
+// Organizer: Update event
 eventsRoutes.patch(
-  "/:id",
-  requireAuth,
-  requireRole("organizer", "admin"),
-  validateBody(UpdateEventSchema),
+  '/:id',
+  requireRole('organizer', 'admin'),
+  zValidator('json', CreateEventSchema.partial()),
   async (c) => {
-    const id = c.req.param("id");
-    const body = c.get("validatedBody") as z.infer<typeof UpdateEventSchema>;
-    const event = await updateEvent(id, c.var.user.id, body);
-    return c.json({ event });
+    const user = c.get('user');
+    const eventId = c.req.param('id');
+    const data = c.req.valid('json');
+    
+    const updated = await updateEvent(eventId, user.id, data);
+    if (!updated) return c.json({ error: 'Not found or not yours' }, 404);
+    
+    return c.json({ data: updated });
   }
 );
 
-/**
- * POST /api/v1/events/:id/publish
- * Organizer — move event from draft → published.
- */
-eventsRoutes.post(
-  "/:id/publish",
-  requireAuth,
-  requireRole("organizer", "admin"),
-  async (c) => {
-    const id = c.req.param("id");
-    const event = await publishEvent(id, c.var.user.id);
-    return c.json({ event });
-  }
-);
-
-/**
- * POST /api/v1/events/:id/cancel
- * Organizer — cancel a published event.
- */
-eventsRoutes.post(
-  "/:id/cancel",
-  requireAuth,
-  requireRole("organizer", "admin"),
-  async (c) => {
-    const id = c.req.param("id");
-    const event = await cancelEvent(id, c.var.user.id);
-    return c.json({ event });
-  }
-);
-
-/**
- * DELETE /api/v1/events/:id
- * Organizer — delete a draft event.
- */
-eventsRoutes.delete(
-  "/:id",
-  requireAuth,
-  requireRole("organizer", "admin"),
-  async (c) => {
-    const id = c.req.param("id");
-    await deleteEvent(id, c.var.user.id);
-    return c.json({ success: true }, 200);
-  }
-);
+export { eventsRoutes };

@@ -16,6 +16,7 @@
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
     "@hono/node-server": "^1.19.17",
+    "@hono/zod-validator": "^0.9.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "bcryptjs": "^3.0.3",

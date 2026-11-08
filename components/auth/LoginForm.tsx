@@ -40,7 +40,7 @@ const QUICK_OPTIONS = [
 export function LoginForm() {
   const router = useRouter();
 
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,13 +53,13 @@ export function LoginForm() {
 
     try {
       const result = await signIn("credentials", {
-        identifier,
+        email,
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError("Invalid credentials. Please try again.");
+        setError("Invalid email or password");
         return;
       }
 
@@ -74,8 +74,9 @@ export function LoginForm() {
       } else if (role === "organizer") {
         router.push("/en/organizer");
       } else {
-        router.push("/en/dashboard/user");
+        router.push("/dashboard");
       }
+      router.refresh();
     } catch {
       setError("Could not reach the server. Please try again.");
     } finally {
@@ -95,7 +96,7 @@ export function LoginForm() {
           Welcome Back
         </h1>
         <p className="mt-2 text-sm leading-6 text-text-secondary sm:text-base">
-          Your events, tickets, and dashboard all in one place
+          Sign in to your account
         </p>
       </div>
 
@@ -117,7 +118,7 @@ export function LoginForm() {
             htmlFor="login-identifier"
             className="mb-1.5 block text-sm font-semibold text-charcoal"
           >
-            Email or Phone Number
+            Email
           </label>
           <div className="relative">
             <Mail
@@ -126,11 +127,11 @@ export function LoginForm() {
             />
             <input
               id="login-identifier"
-              type="text"
-              autoComplete="username"
-              placeholder="you@example.com or 09..."
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full rounded-xl border border-soft-stone bg-white py-3 pl-10 pr-4 text-sm text-charcoal placeholder:text-text-muted focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 transition"
             />
@@ -188,7 +189,7 @@ export function LoginForm() {
           disabled={loading}
           className="w-full rounded-full bg-brand-red py-3.5 font-heading font-extrabold text-white shadow-[0_6px_24px_rgb(224_64_56/30%)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#c0312a] hover:shadow-[0_10px_32px_rgb(224_64_56/40%)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed motion-reduce:transform-none motion-reduce:transition-none"
         >
-          {loading ? "Logging in…" : "Log In"}
+          {loading ? "Signing in..." : "Sign In"}
         </button>
       </form>
 
@@ -223,7 +224,7 @@ export function LoginForm() {
           href="/register"
           className="inline-flex items-center gap-1 font-bold text-brand-red hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
         >
-          Create Account
+          Create one
           <ArrowRight aria-hidden="true" className="size-3.5" />
         </Link>
       </p>

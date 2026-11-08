@@ -55,12 +55,12 @@ export default async function AdminPaymentsPage({
         id: organizerPayouts.id,
         amount: organizerPayouts.amount,
         status: organizerPayouts.status,
-        referenceId: organizerPayouts.referenceId,
+        payoutAccountId: organizerPayouts.payoutAccountId,
         createdAt: organizerPayouts.createdAt,
         organizerName: users.name,
       })
       .from(organizerPayouts)
-      .leftJoin(users, eq(organizerPayouts.organizerId, users.id))
+      .leftJoin(users, eq(organizerPayouts.userId, users.id))
       .orderBy(desc(organizerPayouts.createdAt))
       .limit(20)
       .catch(() => []),
@@ -121,7 +121,7 @@ export default async function AdminPaymentsPage({
       {/* Payout management */}
       <div>
         <h2 className="mb-4 font-heading text-lg font-bold text-charcoal">Organizer Payouts</h2>
-        <AdminTable headers={["Organizer", "Amount", "Status", "Reference", "Date"]}>
+        <AdminTable headers={["Organizer", "Amount", "Status", "Payout account", "Date"]}>
           <>
             {payoutRows.length === 0 && (
               <tr><td colSpan={5} className="px-5 py-10 text-center text-sm text-text-secondary">No payouts yet.</td></tr>
@@ -131,7 +131,7 @@ export default async function AdminPaymentsPage({
                 <td className="px-5 py-3 text-sm font-semibold text-charcoal">{p.organizerName ?? "—"}</td>
                 <td className="px-5 py-3 text-sm font-semibold text-charcoal">ETB {Number(p.amount).toLocaleString()}</td>
                 <td className="px-5 py-3"><StatusBadge status={p.status} /></td>
-                <td className="px-5 py-3 font-mono text-xs text-text-muted">{p.referenceId ?? "—"}</td>
+                <td className="px-5 py-3 font-mono text-xs text-text-muted">{p.payoutAccountId?.slice(0, 12) ?? "—"}</td>
                 <td className="px-5 py-3 text-xs text-text-muted">
                   {new Intl.DateTimeFormat("en-ET", { dateStyle: "short" }).format(p.createdAt)}
                 </td>
